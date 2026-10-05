@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/bench/">
+    <Project Path="bench/Apex.Benchmarks/Apex.Benchmarks.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Apex.Cli/Apex.Cli.csproj" />
+    <Project Path="src/Apex.MathEngine/Apex.MathEngine.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Apex.Tests/Apex.Tests.csproj" />
+  </Folder>
+</Solution>
