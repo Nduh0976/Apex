@@ -16,11 +16,14 @@ public static class MinimumCurvature
     /// Extra passes that correct for uneven point spacing. 0 gives the plain
     /// equal-spacing objective.
     /// </param>
+    /// <param name="Vectorised">Use the SIMD kernels. False keeps the scalar loops for comparison</param>
+
     public sealed record Options(
         double Margin = 1.0,
         int MaxIterations = 100_000,
         double Tolerance = 1e-5,
-        int Reweightings = 2);
+        int Reweightings = 2,
+        bool Vectorised = true);
 
     public static LineSolution Solve(Track track, Options? options = null)
     {
@@ -113,35 +116,58 @@ public static class MinimumCurvature
             var tNext = 0.5 * (1.0 + Math.Sqrt(1.0 + 4.0 * t * t));
             var momentum = (t - 1.0) / tNext;
 
-            for (var i = 0; i < n; i++)
+            if (options.Vectorised)
             {
-                y[i] = x[i] + momentum * (x[i] - previous[i]);
+                VectorKernels.Extrapolate(x, previous, momentum, y);
+            }
+            else
+            {
+                for (var i = 0; i < n; i++)
+                {
+                    y[i] = x[i] + momentum * (x[i] - previous[i]);
+                }
             }
 
             Gradient(d, normal, weights, y, residual, gradient);
 
             //Gradient step from y, then project back onto the bounds.
             Array.Copy(x, previous, n);
-            for (var i = 0; i < n; i++)
-            {
-                x[i] = y[i] - step * gradient[i];
-            }
 
-            bounds.Project(x);
+            if (options.Vectorised)
+            {
+                VectorKernels.StepAndProject(y, gradient, step, bounds.Lower, bounds.Upper, x);
+            }
+            else
+            {
+                for (var i = 0; i < n; i++)
+                {
+                    x[i] = y[i] - step * gradient[i];
+                }
+
+                bounds.Project(x);
+            }
 
             // Adaptive restart (O'Donoghue & Candes): if momemntum is carrying
             // us uphill, throw it away. This removes most of the oscillation
             // that plain Nesterov momentum shows, at almost no cost.
-            var uphiill = 0.0;
-            var stationarity = 0.0;
-
-            for (var i = 0; i < n; i++)
+            double uphill, stationarity;
+            if (options.Vectorised)
             {
-                uphiill += (y[i] - x[i]) * (x[i] - previous[i]);
-                stationarity = Math.Max(stationarity, Math.Abs(y[i] - x[i]));
+                (uphill, stationarity) = VectorKernels.Diagnostics(y, x, previous);
+            }
+            else
+            {
+                uphill = 0.0;
+                stationarity = 0.0;
+
+                for (var i = 0; i < n; i++)
+                {
+                    uphill += (y[i] - x[i]) * (x[i] - previous[i]);
+                    stationarity = Math.Max(stationarity, Math.Abs(y[i] - x[i]));
+                }
             }
 
-            t = uphiill > 0 ? 1.0 : tNext;
+            t = uphill > 0 ? 1.0 : tNext;
 
             // Stop on the gradient mapping (y -x) / step: the projected
             // gradient, which is zero exactly at a constrained minimum. A
