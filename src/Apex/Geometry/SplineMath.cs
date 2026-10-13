@@ -51,8 +51,8 @@ public static class SplineMath
             ws.My[i] = 6.0 * ((q.Y - c.Y) / h[i] - (c.Y - p.Y) / h[prev]); 
         }
 
-        Tridiagonal.SolveCyclic(ws.Sub, ws.Diag, ws.Sup, ws.Mx, ws.Solver);
-        Tridiagonal.SolveCyclic(ws.Sub, ws.Diag, ws.Sup, ws.My, ws.Solver);
+        // x and y share the matrix, so solve both in one elimination sweep.
+        Tridiagonal.SolveCyclic(ws.Sub, ws.Diag, ws.Sup, ws.Mx, ws.My, ws.Solver);
     }
 
     /// <summary>
