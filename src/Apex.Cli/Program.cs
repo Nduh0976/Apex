@@ -22,7 +22,7 @@ else
 
     if (root is null)
     {
-        Console.Error.WriteLine("usage: Apex.Cli [tack.csv] [--grip \"<formula in v>\"] [--lattace]");
+        Console.Error.WriteLine("usage: Apex.Cli [track.csv] [--grip \"<formula in v>\"] [--lattace]");
         Console.Error.WriteLine("No track given, and no tracks/Monza.csv found above" + AppContext.BaseDirectory);
 
         return 1;
@@ -33,7 +33,7 @@ else
     // the track resolves from there and out/ is written there.
     Directory.SetCurrentDirectory(root);
     trackPath = Path.Combine("tracks", "Monza.csv");
-    Console.WriteLine($"No tack given; using {Path.GetFullPath(trackPath)}");
+    Console.WriteLine($"No track given; using {Path.GetFullPath(trackPath)}");
 }
 
 var track = TrackLoader.LoadCsv(trackPath).Resample(spacing: 5.0);
