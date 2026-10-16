@@ -59,7 +59,7 @@ public sealed class Track
     public double Length { get; }
 
     /// <summary> Most negative (rightward) offset allowed at station i.</summary>
-    public double LowerBound(int i, double margin) => Math.Min(0.0, WidthRight[i] - margin);
+    public double LowerBound(int i, double margin) => Math.Min(0.0, -(WidthRight[i] - margin));
 
     /// <summary> Most positive (leftward) offset allowed at station i.</summary>
     public double UpperBound(int i, double margin) => Math.Max(0.0, WidthLeft[i] - margin);
